@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pricing &amp; COGS Calculator</title>
+  <style>
+    /* =========================================
+       Stylesheet
+       -----------
+       All colors, fonts, spacings, and sizes are defined
+       here as CSS custom properties (variables). Adjust
+       these values to fine‑tune the look and feel of the
+       calculator without hunting through the code.
+    */
+    :root {
+      /* Base colors */
+      --bg-color: #fafafa;              /* Background surrounding the card */
+      --card-bg: #ffffff;               /* Main card background */
+      --primary-color: #d08954;         /* Orange accent used in header bars */
+      --gradient-start: #202228;        /* Dark start of left gradient bar */
+      --gradient-end: #d08954;          /* End color of left gradient bar */
+      --text-color: #2a2a2a;            /* Primary text color */
+      --muted-text-color: #666666;      /* Secondary/muted text color */
+      --border-color: #e5e5e5;          /* Light border color used on tables */
+      --header-bg: #faf2ed;             /* Light background behind section headers */
+      --even-row-bg: #f8f8f8;           /* Alt row color for tables */
+      --odd-row-bg: #ffffff;            /* Alt row color for tables */
+
+      /* Rounded corners & spacing */
+      --border-radius: 8px;             /* Standard border radius */
+      --box-padding: 16px;              /* Padding for sections */
+
+      /* Typography */
+      --font-size-base: 16px;           /* Base font size */
+      --title-size: 1.6rem;             /* Title font size */
+      --section-title-size: 1.2rem;     /* Section header font size */
+      --metric-font-size: 0.9rem;       /* Metric table font size */
+
+      /* JAPA logo sizing */
+      --logo-height: 40px;              /* Height of the logo in the header */
+    }
+
+    /* Global resets and typography */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.4;
+      font-size: var(--font-size-base);
+    }
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    /* Card container */
+    main.card {
+      max-width: 1100px;
+      margin: 40px auto;
+      background-color: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      overflow: hidden;
+      position: relative;
+    }
+    /* Left vertical gradient bar */
+    main.card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+    }
+
+    /* Title section */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px 24px 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .card-header h1 {
+      font-size: var(--title-size);
+      color: var(--text-color);
+      margin: 0;
+    }
+    /* Logo sizing. The logo height is set via --logo-height; width auto-scales */
+    .card-header .japa-logo {
+      height: var(--logo-height);
+      width: auto;
+    }
+
+    /* Summary inputs */
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 16px 24px;
+    }
+    .summary-item {
+      flex: 1 1 200px;
+      background-color: var(--even-row-bg);
+      border-radius: var(--border-radius);
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .summary-item label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted-text-color);
+      margin-bottom: 4px;
+    }
+    .summary-item input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 1rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background-color: #fff;
+    }
+
+    /* Metric table */
+    .metrics {
+      padding: 0 24px 24px 24px;
+    }
+    table.metric-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--metric-font-size);
+    }
+    table.metric-table th,
+    table.metric-table td {
+      padding: 8px 12px;
+      text-align: right;
+    }
+    table.metric-table th:first-child,
+    table.metric-table td:first-child {
+      text-align: left;
+    }
+    table.metric-table thead th {
+      background-color: var(--header-bg);
+      color: var(--text-color);
+      font-weight: 600;
+    }
+    table.metric-table tbody tr:nth-child(even) {
+      background-color: var(--even-row-bg);
+    }
+    table.metric-table tbody tr:nth-child(odd) {
+      background-color: var(--odd-row-bg);
+    }
+
+    /* Layout for revenue and cogs sections */
+    .flex-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 0 24px 24px 24px;
+    }
+    section.revenue,
+    section.cogs {
+      flex: 1 1 480px;
+      background-color: var(--odd-row-bg);
+      border-radius: var(--border-radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    section.revenue header,
+    section.cogs header {
+      padding: 16px;
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+    section.revenue header h2,
+    section.cogs header h2 {
+      font-size: var(--section-title-size);
+      color: var(--text-color);
+    }
+
+    table.revenue-table,
+    table.cogs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--metric-font-size);
+    }
+    table.revenue-table th,
+    table.cogs-table th,
+    table.revenue-table td,
+    table.cogs-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      vertical-align: middle;
+    }
+    table.revenue-table td.price,
+    table.revenue-table td.quantity,
+    table.revenue-table td.total,
+    table.cogs-table td.cost,
+    table.cogs-table td.quantity,
+    table.cogs-table td.total {
+      text-align: right;
+    }
+    table.revenue-table thead th,
+    table.cogs-table thead th {
+      background-color: var(--header-bg);
+      color: var(--text-color);
+      font-weight: 600;
+    }
+    table.revenue-table tbody tr:nth-child(even),
+    table.cogs-table tbody tr:nth-child(even) {
+      background-color: var(--even-row-bg);
+    }
+    table.revenue-table tbody tr:nth-child(odd),
+    table.cogs-table tbody tr:nth-child(odd) {
+      background-color: var(--odd-row-bg);
+    }
+    table.revenue-table input[type="number"],
+    table.cogs-table input[type="number"] {
+      width: 80px;
+      padding: 4px 6px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      text-align: right;
+      font-size: 0.9rem;
+    }
+
+    .totals {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      background-color: var(--header-bg);
+      font-weight: 600;
+      font-size: var(--metric-font-size);
+    }
+    .totals div {
+      margin-bottom: 6px;
+    }
+    .totals span {
+      float: right;
+    }
+
+    /* Sales commission inputs */
+    .commission-container {
+      padding: 16px;
+      border-top: 1px solid var(--border-color);
+      background-color: var(--odd-row-bg);
+    }
+    .commission-container .commission-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .commission-container .commission-row label {
+      flex: 1;
+      font-size: var(--metric-font-size);
+      /* Highlight commission labels in JAPA orange for emphasis */
+      color: var(--primary-color);
+    }
+    .commission-container .commission-row input[type="number"] {
+      width: 100px;
+      padding: 4px 6px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      text-align: right;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .flex-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+<main class="card">
+  <!-- Card header with JAPA logo and title -->
+  <div class="card-header">
+    <!-- JAPA logo. Adjust the height via the --logo-height variable below -->
+    <!-- The src will be assigned dynamically via JavaScript using the LOGO_DATA_URI constant -->
+    <img alt="JAPA logo" class="japa-logo">
+    <h1>Pricing &amp; COGS Calculator</h1>
+  </div>
+  <!-- Summary section: allows the user to set base quantities -->
+  <div class="summary">
+    <div class="summary-item">
+      <label for="input-lanes">Total Lanes</label>
+      <input type="number" id="input-lanes" value="0" min="0">
+    </div>
+    <div class="summary-item">
+      <label for="input-spaces">Total Spaces</label>
+      <input type="number" id="input-spaces" value="0" min="0">
+    </div>
+    <div class="summary-item">
+      <label for="input-base-stations">Base Stations</label>
+      <input type="number" id="input-base-stations" value="0" min="0">
+    </div>
+  </div>
+  <!-- Metric table summarising revenue, costs, and profits across years -->
+  <div class="metrics">
+    <table class="metric-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Year&nbsp;1</th>
+          <th>Year&nbsp;2</th>
+          <th>Year&nbsp;3</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue</td>
+          <td id="metric-rev-y1">$0.00</td>
+          <td id="metric-rev-y2">$0.00</td>
+          <td id="metric-rev-y3">$0.00</td>
+        </tr>
+        <tr>
+          <td>COGS</td>
+          <td id="metric-cogs-y1">$0.00</td>
+          <td id="metric-cogs-y2">$0.00</td>
+          <td id="metric-cogs-y3">$0.00</td>
+        </tr>
+        <tr>
+          <td>Profit</td>
+          <td id="metric-profit-y1">$0.00</td>
+          <td id="metric-profit-y2">$0.00</td>
+          <td id="metric-profit-y3">$0.00</td>
+        </tr>
+        <tr>
+          <td>Profit Margin</td>
+          <td id="metric-profitmargin-y1">0.0%</td>
+          <td id="metric-profitmargin-y2">0.0%</td>
+          <td id="metric-profitmargin-y3">0.0%</td>
+        </tr>
+        <tr>
+          <td>COGS as % of Revenue</td>
+          <td id="metric-cogspct-y1">0.0%</td>
+          <td id="metric-cogspct-y2">0.0%</td>
+          <td id="metric-cogspct-y3">0.0%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="flex-container">
+    <!-- Revenue section -->
+    <section class="revenue">
+      <header>
+        <h2>Revenue</h2>
+      </header>
+      <table class="revenue-table" id="revenue-table">
+        <thead>
+          <tr>
+            <th style="width:45%;">Item</th>
+            <th style="width:20%;">Price</th>
+            <th style="width:20%;">Quantity</th>
+            <th style="width:15%;">Total Year&nbsp;1</th>
+          </tr>
+        </thead>
+        <tbody id="revenue-body">
+          <!-- Dynamic rows inserted here via JavaScript -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3">Total Revenue</th>
+            <th id="total-revenue">$0.00</th>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+    <!-- COGS section -->
+    <section class="cogs">
+      <header>
+        <h2>Cost of Goods Sold (COGS)</h2>
+      </header>
+      <!-- Counter costs table -->
+      <table class="cogs-table" id="cogs-table-counters">
+        <thead>
+          <tr>
+            <th style="width:45%;">Item</th>
+            <th style="width:20%;">Cost</th>
+            <th style="width:20%;">Quantity</th>
+            <th style="width:15%;">Total Year&nbsp;1</th>
+          </tr>
+        </thead>
+        <tbody id="cogs-body-counters">
+          <!-- Dynamic rows inserted here via JavaScript -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3">Total Counters (Cost)</th>
+            <th id="total-counters-cost">$0.00</th>
+          </tr>
+        </tfoot>
+      </table>
+      <!-- Sales commission inputs relocated immediately after the counters totals row. This
+           appears directly below the "Total Counters (Cost)" row so it is
+           more prominent. -->
+      <div class="commission-container" id="commission-container">
+        <div class="commission-row">
+          <label for="commission-rate">Sales Commission Rate (%)</label>
+          <input type="number" id="commission-rate" value="15.3" min="0" step="0.01">
+        </div>
+        <div class="commission-row">
+          <label for="commission-amount">Sales Commission Amount</label>
+          <input type="number" id="commission-amount" value="0" min="0" step="0.01">
+        </div>
+      </div>
+
+      <!-- Base package costs table -->
+      <table class="cogs-table" id="cogs-table-base">
+        <thead>
+          <tr>
+            <th style="width:45%;">Item</th>
+            <th style="width:20%;">Cost</th>
+            <th style="width:20%;">Quantity</th>
+            <th style="width:15%;">Total Year&nbsp;1</th>
+          </tr>
+        </thead>
+        <tbody id="cogs-body-base">
+          <!-- Dynamic rows inserted here via JavaScript -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3">Total Base Package (Cost)</th>
+            <th id="total-base-package-cost">$0.00</th>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="totals">
+        <div>Grand Total Year&nbsp;1 (COGS) <span id="grand-total-cogs">$0.00</span></div>
+        <div>Ongoing Annual COGS (Years&nbsp;2&nbsp;&amp;&nbsp;3) <span id="ongoing-total-cogs">$0.00</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+/* =========================================
+   Script
+   ------
+   This script wires up all interactive elements of the
+   calculator. All data structures used for calculations are
+   defined at the top for easy modification. Wherever
+   possible, values are stored in objects and referenced
+   through IDs so that adding or modifying items requires
+   minimal changes.
+*/
+
+// Base64-encoded JAPA logo. This data URI is assigned to the logo image on page load. Update this string if you wish to replace the logo.
+const LOGO_DATA_URI = 'data:image/webp;base64,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';
+
+// Flags to prevent infinite loops when updating quantities between summary and revenue
+let updatingSummaryFromRevenue = false;
+let updatingRevenueFromSummary = false;
+
+// Revenue items with id, name, initial price, and quantity.
+const revenueItems = [
+  { id: 'perSpace', name: 'JAPA Per-space SaaS', price: 250, quantity: 0 },
+  { id: 'laneCounters', name: 'JAPA Lane Counters SaaS', price: 4500, quantity: 0 },
+  { id: 'baseStationRev', name: 'Base Station', price: 3300, quantity: 0 },
+];
+
+// Preserve the original (base) price for each revenue item. This is used
+// when computing offer pricing so that switching between offers always
+// references the baseline values and not any intermediate modifications.
+revenueItems.forEach(item => {
+  item.basePrice = item.price;
+});
+
+// COGS items that depend on number of lane counters. Each has an id,
+// descriptive name, cost per unit, and quantity. Quantities can be
+// automatically filled from summary inputs or manually overridden.
+const cogsCounterItems = [
+  { id: 'activationCounter', name: 'Activation Fee per Counter (Cost)', cost: 137, quantity: 0 },
+  { id: 'annualCounter', name: 'Annual per Counter S and S (Cost)', cost: 690, quantity: 0 },
+  { id: 'baseStationAntenna', name: 'Base Station and Antenna (Cost)', cost: 1938, quantity: 0 },
+  { id: 'modem5g', name: '5g Modem (Cost)', cost: 80, quantity: 0 },
+  { id: 'installCounter', name: 'Installation per Lane Counter (Cost)', cost: 25, quantity: 0 },
+  // Added recurring cost per base station. This line item represents a data
+  // plan subscription for each base station. The quantity of this item will
+  // always mirror the quantity of the base station and antenna line item.
+  { id: 'dataPlan', name: 'Annual Data Plan per Station (Cost)', cost: 240, quantity: 0 },
+];
+
+// COGS items that depend on the base package (e.g. per sensor).
+const cogsBaseItems = [
+  { id: 'activationBase', name: 'Activation Fee per Sensor Base Package (Cost)', cost: 137, quantity: 0 },
+  { id: 'annualBase', name: 'Annual per Sensor S and S Base Package (Cost)', cost: 32.4, quantity: 0 },
+  { id: 'installSensor', name: 'Installation per Sensor (Cost)', cost: 25, quantity: 0 },
+];
+
+// Sales commission state. Both rate (%) and amount can be edited.
+const salesCommission = {
+  rate: 15.3,    // Commission percentage (0–100). Default is 15.3%
+  amount: 0,  // Commission amount (editable)
+};
+
+// -------------------------------------------------------------
+// Deployment offers configuration
+//
+// The application supports two optional “Initial Deployment Offer” packages:
+// one for lane counters and one for per‑space sensors. Selecting an offer
+// overrides normal revenue quantities/prices and sets the Year 1 revenue
+// total to a fixed amount (see OFFER_PRICE_TOTAL). When an offer is active,
+// all revenue inputs and summary fields become read‑only. Quantities and
+// prices are automatically computed to align the offer total with
+// OFFER_PRICE_TOTAL. When the offer is deselected, the prior state is
+// restored.
+const DEPLOYMENT_OFFERS = {
+  lane: {
+    id: 'lane',
+    quantities: { laneCounters: 2, baseStationRev: 1, perSpace: 0 },
+  },
+  sensor: {
+    id: 'sensor',
+    quantities: { laneCounters: 0, baseStationRev: 1, perSpace: 40 },
+  },
+};
+const OFFER_PRICE_TOTAL = 15000;
+let offerActive = false;
+let offerType = null; // 'lane' or 'sensor'
+// savedState keeps track of original revenue prices, quantities, and summary
+// values so that they can be restored when an offer is toggled off.
+let savedState = null;
+
+// Format a number as currency (USD). Use this helper whenever
+// displaying monetary values.
+function formatCurrency(value) {
+  const options = { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return new Intl.NumberFormat('en-US', options).format(value);
+}
+
+// Format as percentage string with one decimal place.
+function formatPercent(value) {
+  return (value * 100).toFixed(1) + '%';
+}
+
+// Render revenue table rows.
+function renderRevenueTable() {
+  const tbody = document.getElementById('revenue-body');
+  tbody.innerHTML = '';
+  revenueItems.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td class="price">
+        <input type="number" min="0" step="0.01" value="${item.price}" data-type="price" data-id="${item.id}">
+      </td>
+      <td class="quantity">
+        <input type="number" min="0" step="1" value="${item.quantity}" data-type="quantity" data-id="${item.id}">
+      </td>
+      <td class="total" id="rev-total-${item.id}">$0.00</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Append offer rows at the end of the revenue table. These rows allow the user
+  // to select special deployment offers which override normal pricing and
+  // quantities. Each row contains a checkbox and a total cell. The totals
+  // will be updated in recalculate() when an offer is active.
+  const offerLaneRow = document.createElement('tr');
+  offerLaneRow.classList.add('offer-row');
+  offerLaneRow.innerHTML = `
+    <td colspan="3">
+      <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" id="offer-lane" />
+        Initial Deployment Offer&nbsp;– lane counter
+      </label>
+    </td>
+    <td class="total" id="offer-total-lane">$0.00</td>
+  `;
+  tbody.appendChild(offerLaneRow);
+  const offerSensorRow = document.createElement('tr');
+  offerSensorRow.classList.add('offer-row');
+  offerSensorRow.innerHTML = `
+    <td colspan="3">
+      <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" id="offer-sensor" />
+        Initial Deployment Offer&nbsp;– Per Space sensors
+      </label>
+    </td>
+    <td class="total" id="offer-total-sensor">$0.00</td>
+  `;
+  tbody.appendChild(offerSensorRow);
+}
+
+// Render COGS table rows for counters and base package.
+function renderCogsTables() {
+  const bodyCounters = document.getElementById('cogs-body-counters');
+  bodyCounters.innerHTML = '';
+  cogsCounterItems.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td class="cost">
+        <input type="number" min="0" step="0.01" value="${item.cost}" data-type="cogs-cost" data-id="${item.id}">
+      </td>
+      <td class="quantity">
+        <input type="number" min="0" step="1" value="${item.quantity}" data-type="cogs-quantity" data-id="${item.id}">
+      </td>
+      <td class="total" id="cogs-total-${item.id}">$0.00</td>
+    `;
+    bodyCounters.appendChild(tr);
+  });
+  const bodyBase = document.getElementById('cogs-body-base');
+  bodyBase.innerHTML = '';
+  cogsBaseItems.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td class="cost">
+        <input type="number" min="0" step="0.01" value="${item.cost}" data-type="cogs-cost" data-id="${item.id}">
+      </td>
+      <td class="quantity">
+        <input type="number" min="0" step="1" value="${item.quantity}" data-type="cogs-quantity" data-id="${item.id}">
+      </td>
+      <td class="total" id="cogs-total-${item.id}">$0.00</td>
+    `;
+    bodyBase.appendChild(tr);
+  });
+}
+
+// Calculate all totals and update metric table and totals display.
+function recalculate() {
+  // ------- Revenue calculations
+  let totalRevenueY1 = 0;
+  revenueItems.forEach(item => {
+    const lineTotal = item.price * item.quantity;
+    totalRevenueY1 += lineTotal;
+    const cell = document.getElementById('rev-total-' + item.id);
+    if (cell) cell.textContent = formatCurrency(lineTotal);
+  });
+  document.getElementById('total-revenue').textContent = formatCurrency(totalRevenueY1);
+
+  // ------- Sales commission calculations
+  // When there is revenue, compute commission amount from rate; otherwise keep manual value
+  if (totalRevenueY1 > 0) {
+    salesCommission.amount = (salesCommission.rate / 100) * totalRevenueY1;
+    const amtInput = document.getElementById('commission-amount');
+    if (document.activeElement !== amtInput) {
+      amtInput.value = salesCommission.amount.toFixed(2);
+    }
+  }
+
+  // ------- COGS calculations
+  let countersTotal = 0;
+  cogsCounterItems.forEach(item => {
+    const lineTotal = item.cost * item.quantity;
+    countersTotal += lineTotal;
+    const cell = document.getElementById('cogs-total-' + item.id);
+    if (cell) cell.textContent = formatCurrency(lineTotal);
+  });
+  document.getElementById('total-counters-cost').textContent = formatCurrency(countersTotal);
+
+  let baseTotal = 0;
+  cogsBaseItems.forEach(item => {
+    const lineTotal = item.cost * item.quantity;
+    baseTotal += lineTotal;
+    const cell = document.getElementById('cogs-total-' + item.id);
+    if (cell) cell.textContent = formatCurrency(lineTotal);
+  });
+  document.getElementById('total-base-package-cost').textContent = formatCurrency(baseTotal);
+
+  // Include sales commission in COGS totals
+  const commissionCost = salesCommission.amount;
+  const grandTotalCOGSY1 = countersTotal + baseTotal + commissionCost;
+  document.getElementById('grand-total-cogs').textContent = formatCurrency(grandTotalCOGSY1);
+
+  // Ongoing COGS: sum of annual line items only. Sales commission is paid only in Year 1
+  // and therefore should not be included in Years 2 and 3.
+  let annualCOGS = 0;
+  cogsCounterItems.forEach(item => {
+    if (/Annual/.test(item.name)) {
+      annualCOGS += item.cost * item.quantity;
+    }
+  });
+  cogsBaseItems.forEach(item => {
+    if (/Annual/.test(item.name)) {
+      annualCOGS += item.cost * item.quantity;
+    }
+  });
+  // Ongoing COGS normally equals the sum of annual line items. When a
+  // deployment offer is active, there is no ongoing cost in Years 2 and 3,
+  // so set the ongoing total to zero.
+  let ongoingTotal = annualCOGS;
+  if (offerActive) {
+    ongoingTotal = 0;
+  }
+  document.getElementById('ongoing-total-cogs').textContent = formatCurrency(ongoingTotal);
+
+  // ------- Metric calculations
+  // Determine revenue for Year 1 based on whether an offer is active. When an
+  // offer is selected, totalRevenueY1 is already computed from the adjusted
+  // prices and quantities (ensuring it equals OFFER_PRICE_TOTAL). For Years 2
+  // and 3, revenue should be zero if an offer is active; otherwise it
+  // remains constant.
+  const revenueY1 = totalRevenueY1;
+  const cogsY1 = grandTotalCOGSY1;
+  const profitY1 = revenueY1 - cogsY1;
+  const profitMarginY1 = revenueY1 !== 0 ? (profitY1 / revenueY1) : 0;
+  const cogsPctY1 = revenueY1 !== 0 ? (cogsY1 / revenueY1) : 0;
+  document.getElementById('metric-rev-y1').textContent = formatCurrency(revenueY1);
+  document.getElementById('metric-cogs-y1').textContent = formatCurrency(cogsY1);
+  document.getElementById('metric-profit-y1').textContent = formatCurrency(profitY1);
+  document.getElementById('metric-profitmargin-y1').textContent = formatPercent(profitMarginY1);
+  document.getElementById('metric-cogspct-y1').textContent = formatPercent(cogsPctY1);
+  // Years 2 & 3: revenue is zero if an offer is active (one‑year commitment),
+  // otherwise it carries forward. COGS always uses ongoing cost. Profit
+  // calculations adjust accordingly.
+  const revenueY2 = offerActive ? 0 : revenueY1;
+  const revenueY3 = offerActive ? 0 : revenueY1;
+  const cogsY2 = offerActive ? 0 : ongoingTotal;
+  const cogsY3 = offerActive ? 0 : ongoingTotal;
+  const profitY2 = revenueY2 - cogsY2;
+  const profitY3 = revenueY3 - cogsY3;
+  document.getElementById('metric-rev-y2').textContent = formatCurrency(revenueY2);
+  document.getElementById('metric-rev-y3').textContent = formatCurrency(revenueY3);
+  document.getElementById('metric-cogs-y2').textContent = formatCurrency(cogsY2);
+  document.getElementById('metric-cogs-y3').textContent = formatCurrency(cogsY3);
+  document.getElementById('metric-profit-y2').textContent = formatCurrency(profitY2);
+  document.getElementById('metric-profit-y3').textContent = formatCurrency(profitY3);
+  const profitMarginY2 = revenueY2 !== 0 ? (profitY2 / revenueY2) : 0;
+  const profitMarginY3 = revenueY3 !== 0 ? (profitY3 / revenueY3) : 0;
+  const cogsPctY2 = revenueY2 !== 0 ? (cogsY2 / revenueY2) : 0;
+  const cogsPctY3 = revenueY3 !== 0 ? (cogsY3 / revenueY3) : 0;
+  document.getElementById('metric-profitmargin-y2').textContent = formatPercent(profitMarginY2);
+  document.getElementById('metric-profitmargin-y3').textContent = formatPercent(profitMarginY3);
+  document.getElementById('metric-cogspct-y2').textContent = formatPercent(cogsPctY2);
+  document.getElementById('metric-cogspct-y3').textContent = formatPercent(cogsPctY3);
+
+  // Update the offer total cells. When an offer is active, display the
+  // fixed total for the selected offer and clear the other; otherwise show
+  // zeros in both cells.
+  const offerLaneCell = document.getElementById('offer-total-lane');
+  const offerSensorCell = document.getElementById('offer-total-sensor');
+  if (offerLaneCell && offerSensorCell) {
+    if (offerActive && offerType === 'lane') {
+      offerLaneCell.textContent = formatCurrency(OFFER_PRICE_TOTAL);
+      offerSensorCell.textContent = '$0.00';
+    } else if (offerActive && offerType === 'sensor') {
+      offerLaneCell.textContent = '$0.00';
+      offerSensorCell.textContent = formatCurrency(OFFER_PRICE_TOTAL);
+    } else {
+      offerLaneCell.textContent = '$0.00';
+      offerSensorCell.textContent = '$0.00';
+    }
+  }
+}
+
+// Attach event listeners to all editable fields.
+function attachEventListeners() {
+  // Revenue table: price and quantity changes
+  document.getElementById('revenue-table').addEventListener('input', function(e) {
+    const target = e.target;
+    const id = target.getAttribute('data-id');
+    const type = target.getAttribute('data-type');
+    const value = parseFloat(target.value) || 0;
+    const item = revenueItems.find(i => i.id === id);
+    if (item) {
+      if (type === 'price') {
+        // Update price directly
+        item.price = value;
+      } else if (type === 'quantity') {
+        // Update quantity and, if not already coming from summary, propagate to summary inputs and COGS
+        item.quantity = value;
+        if (!updatingRevenueFromSummary) {
+          updatingSummaryFromRevenue = true;
+          if (id === 'laneCounters') {
+            // Update Total Lanes input and associated COGS quantities
+            document.getElementById('input-lanes').value = value;
+            cogsCounterItems.forEach(ci => {
+              if (ci.id !== 'baseStationAntenna') ci.quantity = value;
+            });
+          } else if (id === 'perSpace') {
+            // Update Total Spaces input and base package quantities
+            document.getElementById('input-spaces').value = value;
+            cogsBaseItems.forEach(ci => {
+              ci.quantity = value;
+            });
+          } else if (id === 'baseStationRev') {
+            // Update Base Stations input and base station antenna quantity
+            document.getElementById('input-base-stations').value = value;
+            const bsItem = cogsCounterItems.find(ci => ci.id === 'baseStationAntenna');
+            if (bsItem) bsItem.quantity = value;
+          }
+          // Refresh the input fields to reflect updated COGS values
+          refreshInputs();
+          updatingSummaryFromRevenue = false;
+        }
+      }
+    }
+    // Always recalculate after changes
+    recalculate();
+  });
+  // COGS tables: cost and quantity changes
+  ['cogs-table-counters','cogs-table-base'].forEach(tableId => {
+    document.getElementById(tableId).addEventListener('input', function(e) {
+      const target = e.target;
+      const id = target.getAttribute('data-id');
+      const type = target.getAttribute('data-type');
+      const value = parseFloat(target.value) || 0;
+      let item = cogsCounterItems.find(i => i.id === id);
+      if (!item) item = cogsBaseItems.find(i => i.id === id);
+      if (item) {
+        if (type === 'cogs-cost') {
+          // Update the cost for the specified COGS item
+          item.cost = value;
+        } else if (type === 'cogs-quantity') {
+          // Update the quantity for the specified COGS item
+          item.quantity = value;
+          // When the base station quantity changes on the COGS side, update
+          // the data plan quantity to match. This ensures that the data
+          // plan cost reflects the number of base stations in use.
+          if (id === 'baseStationAntenna') {
+            const dataItem = cogsCounterItems.find(ci => ci.id === 'dataPlan');
+            if (dataItem) {
+              dataItem.quantity = value;
+              // Update the corresponding input field in the table to reflect the change
+              const dpInput = document.querySelector(`input[data-id="dataPlan"][data-type="cogs-quantity"]`);
+              if (dpInput) dpInput.value = value;
+            }
+          }
+        }
+      }
+      recalculate();
+    });
+  });
+  // Summary inputs: lanes, spaces, base stations
+  document.getElementById('input-lanes').addEventListener('input', function(e) {
+    if (updatingSummaryFromRevenue) {
+      // Skip updates when the summary is being set from revenue to avoid loops
+      return;
+    }
+    const lanes = parseInt(e.target.value, 10) || 0;
+    updatingRevenueFromSummary = true;
+    // Link lane count to revenue and COGS
+    const laneRevenue = revenueItems.find(i => i.id === 'laneCounters');
+    if (laneRevenue) laneRevenue.quantity = lanes;
+    cogsCounterItems.forEach(item => {
+      if (item.id !== 'baseStationAntenna') {
+        item.quantity = lanes;
+      }
+    });
+    refreshInputs();
+    recalculate();
+    updatingRevenueFromSummary = false;
+  });
+  document.getElementById('input-spaces').addEventListener('input', function(e) {
+    if (updatingSummaryFromRevenue) {
+      return;
+    }
+    const spaces = parseInt(e.target.value, 10) || 0;
+    updatingRevenueFromSummary = true;
+    const perSpaceItem = revenueItems.find(i => i.id === 'perSpace');
+    if (perSpaceItem) perSpaceItem.quantity = spaces;
+    cogsBaseItems.forEach(item => {
+      item.quantity = spaces;
+    });
+    refreshInputs();
+    recalculate();
+    updatingRevenueFromSummary = false;
+  });
+  document.getElementById('input-base-stations').addEventListener('input', function(e) {
+    if (updatingSummaryFromRevenue) {
+      return;
+    }
+    const baseStations = parseInt(e.target.value, 10) || 0;
+    updatingRevenueFromSummary = true;
+    const baseRev = revenueItems.find(i => i.id === 'baseStationRev');
+    if (baseRev) baseRev.quantity = baseStations;
+    const bsItem = cogsCounterItems.find(i => i.id === 'baseStationAntenna');
+    if (bsItem) bsItem.quantity = baseStations;
+    // Keep the data plan quantity in sync with the base station quantity when
+    // edited from the summary. Although this update originates from the
+    // COGS side (not revenue), the summary input is treated as editing
+    // COGS quantities, so update the data plan accordingly.
+    const dataItem = cogsCounterItems.find(i => i.id === 'dataPlan');
+    if (dataItem) {
+      dataItem.quantity = baseStations;
+      const dpInput = document.querySelector(`input[data-id="dataPlan"][data-type="cogs-quantity"]`);
+      if (dpInput) dpInput.value = baseStations;
+    }
+    refreshInputs();
+    recalculate();
+    updatingRevenueFromSummary = false;
+  });
+  // Sales commission rate input
+  document.getElementById('commission-rate').addEventListener('input', function(e) {
+    const rate = parseFloat(e.target.value) || 0;
+    salesCommission.rate = rate;
+    recalculate();
+  });
+  // Sales commission amount input
+  document.getElementById('commission-amount').addEventListener('input', function(e) {
+    const amt = parseFloat(e.target.value) || 0;
+    salesCommission.amount = amt;
+    // When amount changes, update rate based on current revenue
+    const totalRevenue = revenueItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (totalRevenue !== 0) {
+      salesCommission.rate = (amt / totalRevenue) * 100;
+      const rateInput = document.getElementById('commission-rate');
+      if (document.activeElement !== rateInput) {
+        rateInput.value = salesCommission.rate.toFixed(2);
+      }
+    }
+    recalculate();
+  });
+
+  // Deployment offer checkboxes. When an offer checkbox is toggled on, apply
+  // the corresponding offer; when toggled off, remove it. Only one offer
+  // may be active at a time.
+  const laneOfferCheckbox = document.getElementById('offer-lane');
+  const sensorOfferCheckbox = document.getElementById('offer-sensor');
+  if (laneOfferCheckbox) {
+    laneOfferCheckbox.addEventListener('change', function(e) {
+      if (e.target.checked) {
+        applyOffer('lane');
+      } else if (offerActive && offerType === 'lane') {
+        removeOffer();
+      }
+    });
+  }
+  if (sensorOfferCheckbox) {
+    sensorOfferCheckbox.addEventListener('change', function(e) {
+      if (e.target.checked) {
+        applyOffer('sensor');
+      } else if (offerActive && offerType === 'sensor') {
+        removeOffer();
+      }
+    });
+  }
+}
+
+// Refresh the number inputs in the table when quantities change automatically
+function refreshInputs() {
+  revenueItems.forEach(item => {
+    const priceInput = document.querySelector(`input[data-id="${item.id}"][data-type="price"]`);
+    const qtyInput = document.querySelector(`input[data-id="${item.id}"][data-type="quantity"]`);
+    if (priceInput) priceInput.value = item.price;
+    if (qtyInput) qtyInput.value = item.quantity;
+  });
+  cogsCounterItems.forEach(item => {
+    const costInput = document.querySelector(`input[data-id="${item.id}"][data-type="cogs-cost"]`);
+    const qtyInput = document.querySelector(`input[data-id="${item.id}"][data-type="cogs-quantity"]`);
+    if (costInput) costInput.value = item.cost;
+    if (qtyInput) qtyInput.value = item.quantity;
+  });
+  cogsBaseItems.forEach(item => {
+    const costInput = document.querySelector(`input[data-id="${item.id}"][data-type="cogs-cost"]`);
+    const qtyInput = document.querySelector(`input[data-id="${item.id}"][data-type="cogs-quantity"]`);
+    if (costInput) costInput.value = item.cost;
+    if (qtyInput) qtyInput.value = item.quantity;
+  });
+}
+
+// Compute new pricing for an offer. Given the selected offer type
+// ('lane' or 'sensor'), compute the adjusted price for the relevant revenue
+// item so that the sum of all items equals OFFER_PRICE_TOTAL. Only one
+// revenue item besides the base station participates in each offer. The
+// base station price remains unchanged.
+function computeOfferPrices(type) {
+  const quantities = DEPLOYMENT_OFFERS[type].quantities;
+  // Find references to the revenue items
+  const laneItem = revenueItems.find(i => i.id === 'laneCounters');
+  const sensorItem = revenueItems.find(i => i.id === 'perSpace');
+  const baseItem = revenueItems.find(i => i.id === 'baseStationRev');
+  // Compute the remaining amount after accounting for base station
+  const baseContribution = baseItem.price * quantities.baseStationRev;
+  // Determine which item needs a price adjustment
+  if (type === 'lane') {
+    // If there are lane counters, adjust the lane price
+    const qty = quantities.laneCounters;
+    if (qty > 0) {
+      const newPrice = (OFFER_PRICE_TOTAL - baseContribution) / qty;
+      return { lanePrice: parseFloat(newPrice.toFixed(2)), sensorPrice: sensorItem.price };
+    }
+  } else if (type === 'sensor') {
+    const qty = quantities.perSpace;
+    if (qty > 0) {
+      const newPrice = (OFFER_PRICE_TOTAL - baseContribution) / qty;
+      return { lanePrice: laneItem.price, sensorPrice: parseFloat(newPrice.toFixed(2)) };
+    }
+  }
+  // Fallback: no adjustment needed
+  return { lanePrice: laneItem.price, sensorPrice: sensorItem.price };
+}
+
+// Apply the selected deployment offer. This function saves the current
+// state, updates quantities and prices to simulate the offer, disables
+// revenue and summary inputs, updates COGS quantities, and recalculates
+// totals.
+function applyOffer(type) {
+  // If another offer is currently active, remove it first. This restores
+  // the baseline prices and quantities so that switching between offers
+  // correctly references the original values (including any user edits).
+  if (offerActive) {
+    removeOffer();
+  }
+  // If the offer is already active on the same type (after removal), do nothing
+  if (offerActive && offerType === type) return;
+  // Save current state for restoration later
+  savedState = {
+    revenue: revenueItems.map(item => ({ id: item.id, price: item.price, quantity: item.quantity })),
+    summary: {
+      lanes: parseInt(document.getElementById('input-lanes').value, 10) || 0,
+      spaces: parseInt(document.getElementById('input-spaces').value, 10) || 0,
+      baseStations: parseInt(document.getElementById('input-base-stations').value, 10) || 0,
+    }
+  };
+  // Determine new quantities for the offer
+  const q = DEPLOYMENT_OFFERS[type].quantities;
+  // Compute adjusted price for the offer
+  const prices = computeOfferPrices(type);
+  // Apply new quantities and prices
+  revenueItems.forEach(item => {
+    if (item.id === 'laneCounters') {
+      item.quantity = q.laneCounters;
+      if (type === 'lane') item.price = prices.lanePrice;
+    } else if (item.id === 'perSpace') {
+      item.quantity = q.perSpace;
+      if (type === 'sensor') item.price = prices.sensorPrice;
+    } else if (item.id === 'baseStationRev') {
+      item.quantity = q.baseStationRev;
+      // Base station price remains unchanged
+    }
+  });
+  // Propagate quantities to summary inputs and COGS items
+  updatingRevenueFromSummary = true;
+  updatingSummaryFromRevenue = true;
+  document.getElementById('input-lanes').value = q.laneCounters;
+  document.getElementById('input-spaces').value = q.perSpace;
+  document.getElementById('input-base-stations').value = q.baseStationRev;
+  // Update COGS quantities based on the new summary
+  cogsCounterItems.forEach(ci => {
+    if (ci.id !== 'baseStationAntenna') {
+      ci.quantity = q.laneCounters;
+    }
+  });
+  const bsItem = cogsCounterItems.find(ci => ci.id === 'baseStationAntenna');
+  if (bsItem) bsItem.quantity = q.baseStationRev;
+  cogsBaseItems.forEach(ci => {
+    ci.quantity = q.perSpace;
+  });
+  // Disable revenue price/quantity inputs and summary inputs
+  document.querySelectorAll('input[data-type="price"], input[data-type="quantity"]').forEach(inp => {
+    inp.disabled = true;
+  });
+  document.getElementById('input-lanes').disabled = true;
+  document.getElementById('input-spaces').disabled = true;
+  document.getElementById('input-base-stations').disabled = true;
+  // Mark this offer as active
+  offerActive = true;
+  offerType = type;
+  // Ensure only the selected offer checkbox is checked
+  if (type === 'lane') {
+    document.getElementById('offer-lane').checked = true;
+    document.getElementById('offer-sensor').checked = false;
+  } else if (type === 'sensor') {
+    document.getElementById('offer-sensor').checked = true;
+    document.getElementById('offer-lane').checked = false;
+  }
+  // Refresh the inputs and recalculate
+  refreshInputs();
+  recalculate();
+  // Reset update flags
+  updatingRevenueFromSummary = false;
+  updatingSummaryFromRevenue = false;
+}
+
+// Remove the currently active deployment offer and restore the saved state.
+function removeOffer() {
+  if (!offerActive) return;
+  // Restore revenue prices and quantities
+  savedState.revenue.forEach(savedItem => {
+    const item = revenueItems.find(i => i.id === savedItem.id);
+    if (item) {
+      item.price = savedItem.price;
+      item.quantity = savedItem.quantity;
+    }
+  });
+  // Restore summary inputs
+  updatingRevenueFromSummary = true;
+  updatingSummaryFromRevenue = true;
+  document.getElementById('input-lanes').value = savedState.summary.lanes;
+  document.getElementById('input-spaces').value = savedState.summary.spaces;
+  document.getElementById('input-base-stations').value = savedState.summary.baseStations;
+  // Restore COGS quantities based on saved summary
+  cogsCounterItems.forEach(ci => {
+    if (ci.id !== 'baseStationAntenna') {
+      ci.quantity = savedState.summary.lanes;
+    }
+  });
+  const bsItem = cogsCounterItems.find(ci => ci.id === 'baseStationAntenna');
+  if (bsItem) bsItem.quantity = savedState.summary.baseStations;
+  cogsBaseItems.forEach(ci => {
+    ci.quantity = savedState.summary.spaces;
+  });
+  // Re-enable inputs
+  document.querySelectorAll('input[data-type="price"], input[data-type="quantity"]').forEach(inp => {
+    inp.disabled = false;
+  });
+  document.getElementById('input-lanes').disabled = false;
+  document.getElementById('input-spaces').disabled = false;
+  document.getElementById('input-base-stations').disabled = false;
+  // Clear offer checkboxes and totals
+  document.getElementById('offer-lane').checked = false;
+  document.getElementById('offer-sensor').checked = false;
+  const laneCell = document.getElementById('offer-total-lane');
+  const sensorCell = document.getElementById('offer-total-sensor');
+  if (laneCell) laneCell.textContent = '$0.00';
+  if (sensorCell) sensorCell.textContent = '$0.00';
+  // Clear offer state
+  offerActive = false;
+  offerType = null;
+  savedState = null;
+  // Refresh and recalculate
+  refreshInputs();
+  recalculate();
+  updatingRevenueFromSummary = false;
+  updatingSummaryFromRevenue = false;
+}
+
+// Initialize the calculator on page load
+document.addEventListener('DOMContentLoaded', function() {
+  renderRevenueTable();
+  renderCogsTables();
+  attachEventListeners();
+  // Assign the JAPA logo data URI to the logo image
+  const logoImg = document.querySelector('.japa-logo');
+  if (logoImg) {
+    logoImg.src = LOGO_DATA_URI;
+  }
+  document.getElementById('commission-rate').value = salesCommission.rate;
+  document.getElementById('commission-amount').value = salesCommission.amount;
+  recalculate();
+});
+</script>
+</body>
+</html>
