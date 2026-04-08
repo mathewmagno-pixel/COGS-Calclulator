@@ -428,6 +428,107 @@
       50% { height: 28px; }
     }
 
+    /* ===== SETTINGS MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 480px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 40px rgba(0,212,255,0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1.4rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+
+    .modal-body { padding: 24px; }
+
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    .setting-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .setting-value {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+    }
+
+    /* ===== QUICK ACTIONS ===== */
+    .quick-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 8px 24px 0;
+    }
+
+    .quick-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .quick-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -438,6 +539,7 @@
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .message { max-width: 90%; }
+      .quick-actions { display: none; }
     }
   </style>
 </head>
@@ -459,6 +561,9 @@
   <div class="header-right">
     <span class="status-text" id="statusText">INITIALIZING...</span>
     <div class="status-dot" id="statusDot"></div>
+    <button class="btn-icon" onclick="openSettings()" title="Settings" style="width:36px;height:36px;border-radius:8px">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </button>
   </div>
 </header>
 
@@ -499,6 +604,16 @@
       </div>
     </div>
 
+    <!-- QUICK ACTIONS -->
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="quickAsk('What are my top priorities right now?')">My priorities</button>
+      <button class="quick-btn" onclick="quickAsk('Do I have any urgent emails?')">Urgent emails</button>
+      <button class="quick-btn" onclick="quickAsk('What meetings do I have today?')">Today\'s meetings</button>
+      <button class="quick-btn" onclick="quickAsk('Any important Slack messages?')">Slack updates</button>
+      <button class="quick-btn" onclick="quickAsk('What tasks are overdue?')">Overdue tasks</button>
+      <button class="quick-btn" onclick="quickAsk('Give me a summary of my HubSpot deals')">Deal pipeline</button>
+    </div>
+
     <!-- INPUT -->
     <div class="input-area">
       <div class="waveform" id="waveform">
@@ -526,6 +641,21 @@
         <button class="btn-send" id="btnSend" onclick="sendMessage()">
           <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">System Settings</span>
+      <button class="modal-close" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="modal-body" id="settingsBody">
+      <div class="setting-group">
+        <div class="setting-label">Loading...</div>
       </div>
     </div>
   </div>
@@ -863,6 +993,83 @@ function setStatus(text, online) {
   statusText.textContent = text;
   statusDot.classList.toggle('offline', !online);
 }
+
+// ===== QUICK ASK =====
+function quickAsk(question) {
+  inputField.value = question;
+  sendMessage();
+}
+
+// ===== SETTINGS =====
+async function openSettings() {
+  const modal = document.getElementById('settingsModal');
+  const body = document.getElementById('settingsBody');
+  modal.classList.add('visible');
+
+  try {
+    const response = await fetch('/api/settings');
+    const data = await response.json();
+
+    body.innerHTML = `
+      <div class="setting-group">
+        <div class="setting-label">AI Model</div>
+        <div class="setting-value">${data.claude_model || 'N/A'}</div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">TTS Engine</div>
+        <div class="setting-value">${data.tts_engine || 'edge'} (${data.tts_voice || 'default'})</div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Connected Integrations</div>
+        <div class="setting-value">${data.active_integrations.length > 0 ? data.active_integrations.join(', ') : 'None'}</div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Keyboard Shortcuts</div>
+        <div class="setting-value">
+          Space (hold) = Voice input<br>
+          Enter = Send message<br>
+        </div>
+      </div>
+      <div class="setting-group" style="margin-top:24px">
+        <button class="btn-briefing" onclick="clearChat()" style="border-color:var(--urgent);color:var(--urgent);background:rgba(239,68,68,0.1)">
+          Clear Conversation
+        </button>
+      </div>
+    `;
+  } catch (error) {
+    body.innerHTML = '<div class="setting-group"><div class="setting-label">Unable to load settings</div></div>';
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('visible');
+}
+
+async function clearChat() {
+  try {
+    await fetch('/api/clear-history', { method: 'POST' });
+    messagesEl.innerHTML = `
+      <div class="message system">CONVERSATION HISTORY CLEARED</div>
+      <div class="message assistant">
+        <div class="message-label">JARVIS</div>
+        Memory wiped clean, sir. I'm ready for a fresh start. How may I assist you?
+      </div>
+    `;
+    closeSettings();
+  } catch (error) {
+    addMessage('system', 'Failed to clear history');
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('settingsModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeSettings();
+});
 </script>
 
 </body>
