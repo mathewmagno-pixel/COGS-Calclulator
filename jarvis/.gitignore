@@ -1,0 +1,18 @@
+# Environment & secrets
+.env
+token.json
+credentials.json
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Audio cache
+audio_cache/*.mp3
+
+# IDE
+.vscode/
+.idea/
